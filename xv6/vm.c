@@ -337,7 +337,7 @@ copyuvm(pde_t *pgdir, uint sz)
       goto bad;
   }
   
-  for(i = KERNBASE - PGSIZE; i >= curproc->pg ; i -= PGSIZE){
+  for(i = KERNBASE; i >= curproc->pg ; i -= PGSIZE){
     if((pte = walkpgdir(pgdir, (void *) i, 0)) == 0)
       panic("copyuvm: pte should exist");
     if(!(*pte & PTE_P))

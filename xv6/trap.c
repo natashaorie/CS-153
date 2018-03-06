@@ -36,6 +36,7 @@ idtinit(void)
 void
 trap(struct trapframe *tf)
 {
+	uint i;
   if(tf->trapno == T_SYSCALL){
     if(myproc()->killed)
       exit();
@@ -77,6 +78,19 @@ trap(struct trapframe *tf)
             cpuid(), tf->cs, tf->eip);
     lapiceoi();
     break;
+  case T_PGFLT:
+	i = rcr2();
+	struct proc *curproc = myproc();
+	if(i) {
+		if (i > curproc->pg - PGSIZE) {
+			pde_t *pgdir;
+			pgdir = curproc->pgdir;
+			freevm(pgdir);
+			curproc->pg = allocuvm(pgdir, curproc->pg - PGSIZE, curproc->pg);
+			clearpteu(pgdir, (char*)(curproc->pg));
+		}
+	}
+	break;
 
   //PAGEBREAK: 13
   default:
