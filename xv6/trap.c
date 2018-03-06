@@ -36,7 +36,8 @@ idtinit(void)
 void
 trap(struct trapframe *tf)
 {
-	uint i;
+	struct proc *curproc = myproc();
+	
   if(tf->trapno == T_SYSCALL){
     if(myproc()->killed)
       exit();
@@ -78,17 +79,17 @@ trap(struct trapframe *tf)
             cpuid(), tf->cs, tf->eip);
     lapiceoi();
     break;
-  case T_PGFLT:
-	i = rcr2();
-	struct proc *curproc = myproc();
-	if(i) {
-		if (i > curproc->pg - PGSIZE) {
+    
+    
+  case T_PGFLT:		// check if addr w/in range			
+				
+	
+	if((KERNBASE - (curproc->pg + 1)*PGSIZE) < rcr2() && rcr2() < (KERNBASE - (curproc->pg)*PGSIZE)) {
 			pde_t *pgdir;
 			pgdir = curproc->pgdir;
-			freevm(pgdir);
-			curproc->pg = allocuvm(pgdir, curproc->pg - PGSIZE, curproc->pg);
-			clearpteu(pgdir, (char*)(curproc->pg));
-		}
+			freevm(pgdir);					
+			curproc->pg = allocuvm(pgdir, curproc->pg - PGSIZE, curproc->pg); // alloc new pg table
+			clearpteu(pgdir, (char*)(curproc->pg));		// makes page table unreadable
 	}
 	break;
 
