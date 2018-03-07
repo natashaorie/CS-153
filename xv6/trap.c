@@ -79,17 +79,15 @@ trap(struct trapframe *tf)
             cpuid(), tf->cs, tf->eip);
     lapiceoi();
     break;
-    
-    
   case T_PGFLT:		// check if addr w/in range			
-				
-	
-	if((KERNBASE - (curproc->pg + 1)*PGSIZE) < rcr2() && rcr2() < (KERNBASE - (curproc->pg)*PGSIZE)) {
-			pde_t *pgdir;
-			pgdir = curproc->pgdir;
-			freevm(pgdir);					
-			curproc->pg = allocuvm(pgdir, curproc->pg - PGSIZE, curproc->pg); // alloc new pg table
-			clearpteu(pgdir, (char*)(curproc->pg));		// makes page table unreadable
+	//if((KERNBASE - (curproc->pg + 1)*PGSIZE) < rcr2() && rcr2() < (KERNBASE - (curproc->pg)*PGSIZE)) {
+	if ((KERNBASE - (curproc->pg + PGSIZE)) < rcr2() && rcr2() < (KERNBASE - curproc->pg)) {
+			//pde_t *pgdir;
+			//pgdir = curproc->pgdir;
+			//freevm(pgdir);					
+			//curproc->pg = allocuvm(pgdir, curproc->pg - PGSIZE, curproc->pg); // alloc new pg table
+			//clearpteu(pgdir, (char*)(curproc->pg));		// makes page table unreadable
+			curproc->pg += PGSIZE;
 	}
 	break;
 

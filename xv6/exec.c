@@ -63,11 +63,11 @@ exec(char *path, char **argv)
   // Allocate two pages at the next page boundary.
   // Make the first inaccessible.  Use the second as the user stack.
   //sz = PGROUNDUP(sz);
-  if((sp = allocuvm(pgdir, KERNBASE - PGSIZE*2, KERNBASE )) == 0) //use one page, another as guard
+  if((sp = allocuvm(pgdir, KERNBASE - PGSIZE - 4, KERNBASE - 4)) == 0) //use one page, another as guard
     goto bad;
-  clearpteu(pgdir, (char*)(sp - 2*PGSIZE));
+  //clearpteu(pgdir, (char*)(sp - 2*PGSIZE));
   //sp = KERNBASE - PGSIZE;				// initialize stack pointer	
-  curproc->pg = KERNBASE - PGSIZE*2; //address
+  curproc->pg = KERNBASE - PGSIZE -4; //address
 
   // Push argument strings, prepare rest of stack in ustack.
   for(argc = 0; argv[argc]; argc++) {
@@ -100,6 +100,7 @@ exec(char *path, char **argv)
   curproc->sz = sz;
   curproc->tf->eip = elf.entry;  // main
   curproc->tf->esp = sp;
+  //curproc -> pg=
   switchuvm(curproc);
   freevm(oldpgdir);
   return 0;

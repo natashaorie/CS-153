@@ -68,8 +68,10 @@ mappages(pde_t *pgdir, void *va, uint size, uint pa, int perm)
   for(;;){
     if((pte = walkpgdir(pgdir, a, 1)) == 0)
       return -1;
-    if(*pte & PTE_P)
-      panic("remap");
+    if(*pte & PTE_P) {
+	  //cprintf("%d",*pte);
+	  //cprintf("%d", PTE_P);
+      panic("remap");}
     *pte = pa | perm | PTE_P;
     if(a == last)
       break;
@@ -337,7 +339,7 @@ copyuvm(pde_t *pgdir, uint sz)
       goto bad;
   }
   
-  for(i = KERNBASE; i >= curproc->pg ; i -= PGSIZE){
+  for(i = KERNBASE-4; i >= curproc->pg ; i -= PGSIZE){
     if((pte = walkpgdir(pgdir, (void *) i, 0)) == 0)
       panic("copyuvm: pte should exist");
     if(!(*pte & PTE_P))
