@@ -130,6 +130,7 @@ userinit(void)
     panic("userinit: out of memory?");
   inituvm(p->pgdir, _binary_initcode_start, (int)_binary_initcode_size);
   p->sz = PGSIZE;
+  p->pg = PGSIZE;
   memset(p->tf, 0, sizeof(*p->tf));
   p->tf->cs = (SEG_UCODE << 3) | DPL_USER;
   p->tf->ds = (SEG_UDATA << 3) | DPL_USER;
@@ -151,6 +152,21 @@ userinit(void)
   p->state = RUNNABLE;
 
   release(&ptable.lock);
+}
+
+int
+growstack(void) 
+{
+	uint first, last;
+	struct proc *curproc = myproc();
+	
+	first = PGROUNDUP(KERNBASE - (curproc->pg + 1) * PGSIZE);
+	last = KERNBASE - curproc->pg * PGSIZE - 1;
+	if((allocuvm(curproc->pgdir, first, last) == 0))
+		return -1;
+	curproc->pg++;
+	switchuvm(curproc);
+	return 0;
 }
 
 // Grow current process's memory by n bytes.
@@ -190,13 +206,14 @@ fork(void)
   }
 
   // Copy process state from proc.
-  if((np->pgdir = copyuvm(curproc->pgdir, curproc->sz)) == 0){
+  if((np->pgdir = copyuvm(curproc->pgdir, curproc->sz, curproc->pg)) == 0){
     kfree(np->kstack);
     np->kstack = 0;
     np->state = UNUSED;
     return -1;
   }
   np->sz = curproc->sz;
+  np->pg = curproc->pg;
   np->parent = curproc;
   *np->tf = *curproc->tf;
 

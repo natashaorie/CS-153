@@ -315,13 +315,13 @@ clearpteu(pde_t *pgdir, char *uva)
 // Given a parent process's page table, create a copy
 // of it for a child.
 pde_t*
-copyuvm(pde_t *pgdir, uint sz)
+copyuvm(pde_t *pgdir, uint sz, uint pg)
 {
   pde_t *d;
   pte_t *pte;
   uint pa, i, flags;
   char *mem;
-  struct proc *curproc = myproc();
+  //struct proc *curproc = myproc();
 
   if((d = setupkvm()) == 0)
     return 0;
@@ -339,7 +339,7 @@ copyuvm(pde_t *pgdir, uint sz)
       goto bad;
   }
   
-  for(i = KERNBASE-4; i >= curproc->pg ; i -= PGSIZE){
+  for(i = KERNBASE - pg*PGSIZE; i < KERNBASE ; i += PGSIZE){
     if((pte = walkpgdir(pgdir, (void *) i, 0)) == 0)
       panic("copyuvm: pte should exist");
     if(!(*pte & PTE_P))

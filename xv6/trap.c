@@ -79,17 +79,25 @@ trap(struct trapframe *tf)
             cpuid(), tf->cs, tf->eip);
     lapiceoi();
     break;
-  case T_PGFLT:		// check if addr w/in range			
+  case T_PGFLT:		// check if addr w/in range	
+	curproc = myproc();
+	if(rcr2() >= KERNBASE - (curproc->pg + 1) * PGSIZE && rcr2() < KERNBASE - curproc->pg * PGSIZE) {
+		if(growstack() == 0) 
+			cprintf("...growing stack");
+			return;
+		}
+		cprintf("unable to grow stack");
 	//if((KERNBASE - (curproc->pg + 1)*PGSIZE) < rcr2() && rcr2() < (KERNBASE - (curproc->pg)*PGSIZE)) {
-	if ((KERNBASE - (curproc->pg + PGSIZE)) < rcr2() && rcr2() < (KERNBASE - curproc->pg)) {
+	/*if ((KERNBASE - (curproc->pg + PGSIZE)) < rcr2() && rcr2() < (KERNBASE - curproc->pg)) {
 			//pde_t *pgdir;
 			//pgdir = curproc->pgdir;
 			//freevm(pgdir);					
 			//curproc->pg = allocuvm(pgdir, curproc->pg - PGSIZE, curproc->pg); // alloc new pg table
 			//clearpteu(pgdir, (char*)(curproc->pg));		// makes page table unreadable
 			curproc->pg += PGSIZE;
-	}
+	}*/
 	break;
+
 
   //PAGEBREAK: 13
   default:
@@ -123,3 +131,4 @@ trap(struct trapframe *tf)
   if(myproc() && myproc()->killed && (tf->cs&3) == DPL_USER)
     exit();
 }
+
