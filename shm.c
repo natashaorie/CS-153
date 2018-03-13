@@ -32,8 +32,8 @@ int shm_open(int id, char **pointer) {
 // looks through shm_table to see if segment ID already exists
 //you write this
 
-int i;
 struct proc *curproc = myproc();
+int i;
 char *va;
 va = (char*)PGROUNDUP(curproc-sz);
 
